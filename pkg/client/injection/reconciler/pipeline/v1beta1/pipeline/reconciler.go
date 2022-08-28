@@ -23,6 +23,8 @@ import (
 	json "encoding/json"
 	fmt "fmt"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	v1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1beta1"
@@ -37,8 +39,6 @@ import (
 	controller "knative.dev/pkg/controller"
 	logging "knative.dev/pkg/logging"
 	reconciler "knative.dev/pkg/reconciler"
-	"github.com/opentracing/opentracing-go"
-	tags "github.com/opentracing/opentracing-go/ext"
 )
 
 // Interface defines the strongly typed interfaces to be implemented by a

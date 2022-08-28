@@ -23,6 +23,8 @@ import (
 	json "encoding/json"
 	fmt "fmt"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	v1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1beta1"
@@ -39,8 +41,6 @@ import (
 	kmp "knative.dev/pkg/kmp"
 	logging "knative.dev/pkg/logging"
 	reconciler "knative.dev/pkg/reconciler"
-	tags "github.com/opentracing/opentracing-go/ext"
-	"github.com/opentracing/opentracing-go"
 )
 
 // Interface defines the strongly typed interfaces to be implemented by a
@@ -119,11 +119,11 @@ func NewReconciler(ctx context.Context, logger *zap.SugaredLogger, client versio
 	if span = opentracing.SpanFromContext(ctx); span != nil {
 		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
-	    tags.PeerService.Set(span, "NewReconciler")
+		tags.PeerService.Set(span, "NewReconciler")
 	} else {
 		span = opentracing.StartSpan(operation)
 	}
-    defer span.Finish()
+	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	// Check the options function input. It should be 0 or 1.
@@ -181,12 +181,12 @@ func NewReconciler(ctx context.Context, logger *zap.SugaredLogger, client versio
 
 // Reconcile implements controller.Reconciler
 func (r *reconcilerImpl) Reconcile(ctx context.Context, key string) error {
-	var span  opentracing.Span
+	var span opentracing.Span
 	operation := "pkg/client/injection/reconciler/pipeline/v1beta1/taskrun.Reconcile"
 	if span = opentracing.SpanFromContext(ctx); span != nil {
-		span = opentracing.StartSpan( operation, opentracing.ChildOf(span.Context()))
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
-	    tags.PeerService.Set(span, "Reconcile")
+		tags.PeerService.Set(span, "Reconcile")
 	} else {
 		span = opentracing.StartSpan(operation)
 	}
@@ -330,10 +330,10 @@ func (r *reconcilerImpl) updateStatus(ctx context.Context, existing *v1beta1.Tas
 	var span opentracing.Span
 	operation := "pkg/client/injection/reconciler/pipeline/v1beta1/taskrun.updateStatus"
 	if span = opentracing.SpanFromContext(ctx); span != nil {
-		span = opentracing.StartSpan( operation, opentracing.ChildOf(span.Context()))
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
-	    tags.PeerService.Set(span, "updateStatus")
-	}else {
+		tags.PeerService.Set(span, "updateStatus")
+	} else {
 		span = opentracing.StartSpan(operation)
 	}
 	defer span.Finish()
@@ -377,7 +377,7 @@ func (r *reconcilerImpl) updateFinalizersFiltered(ctx context.Context, resource 
 	var span opentracing.Span
 	operation := "pkg/client/injection/reconciler/pipeline/v1beta1/taskrun.updateFinalizersFiltered"
 	if span = opentracing.SpanFromContext(ctx); span != nil {
-		span = opentracing.StartSpan( operation, opentracing.ChildOf(span.Context()))
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "updateFinalizersFiltered")
 	} else {
@@ -449,7 +449,7 @@ func (r *reconcilerImpl) setFinalizerIfFinalizer(ctx context.Context, resource *
 	var span opentracing.Span
 	operation := "pkg/client/injection/reconciler/pipeline/v1beta1/taskrun.setFinalizerIfFinalizer"
 	if span = opentracing.SpanFromContext(ctx); span != nil {
-		span = opentracing.StartSpan( operation, opentracing.ChildOf(span.Context()))
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "setFinalizerIfFinalizer")
 	} else {
@@ -477,15 +477,15 @@ func (r *reconcilerImpl) setFinalizerIfFinalizer(ctx context.Context, resource *
 }
 
 func (r *reconcilerImpl) clearFinalizer(ctx context.Context, resource *v1beta1.TaskRun, reconcileEvent reconciler.Event) (*v1beta1.TaskRun, error) {
-    var span opentracing.Span
+	var span opentracing.Span
 	operation := "pkg/client/injection/reconciler/pipeline/v1beta1/taskrun.clearFinalizer"
 	if span = opentracing.SpanFromContext(ctx); span != nil {
-		span = opentracing.StartSpan( operation, opentracing.ChildOf(span.Context()))
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
-		tags.PeerService.Set(span, "clearFinalizer")		
+		tags.PeerService.Set(span, "clearFinalizer")
 	} else {
 		span = opentracing.StartSpan(operation)
-	}	
+	}
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 

@@ -23,6 +23,8 @@ import (
 	json "encoding/json"
 	fmt "fmt"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	v1beta1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	versioned "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
 	pipelinev1beta1 "github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1beta1"
@@ -39,8 +41,6 @@ import (
 	kmp "knative.dev/pkg/kmp"
 	logging "knative.dev/pkg/logging"
 	reconciler "knative.dev/pkg/reconciler"
-	"github.com/opentracing/opentracing-go"
-	tags "github.com/opentracing/opentracing-go/ext"
 )
 
 // Interface defines the strongly typed interfaces to be implemented by a
@@ -186,7 +186,7 @@ func (r *reconcilerImpl) Reconcile(ctx context.Context, key string) error {
 		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "Reconcile")
-	}else {
+	} else {
 		span = opentracing.StartSpan(operation)
 	}
 	defer span.Finish()
@@ -331,7 +331,7 @@ func (r *reconcilerImpl) updateStatus(ctx context.Context, existing *v1beta1.Pip
 		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "updateStatus")
-	}else {
+	} else {
 		span = opentracing.StartSpan(operation)
 	}
 	defer span.Finish()
@@ -372,13 +372,13 @@ func (r *reconcilerImpl) updateStatus(ctx context.Context, existing *v1beta1.Pip
 // updates defaultFinalizerName or its override.
 func (r *reconcilerImpl) updateFinalizersFiltered(ctx context.Context, resource *v1beta1.PipelineRun) (*v1beta1.PipelineRun, error) {
 
-	var span  opentracing.Span
+	var span opentracing.Span
 	operation := "pkg/client/injection/reconciler/pipeline/v1beta1/pipelinerun.updateFinalizersFiltered"
 	if span = opentracing.SpanFromContext(ctx); span != nil {
 		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "updateFinalizersFiltered")
-	}else {
+	} else {
 		span = opentracing.StartSpan(operation)
 	}
 	defer span.Finish()
@@ -449,7 +449,7 @@ func (r *reconcilerImpl) setFinalizerIfFinalizer(ctx context.Context, resource *
 		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "setFinalizerIfFinalizer")
-	}else {
+	} else {
 		span = opentracing.StartSpan(operation)
 	}
 	defer span.Finish()
@@ -478,7 +478,7 @@ func (r *reconcilerImpl) clearFinalizer(ctx context.Context, resource *v1beta1.P
 		span := opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "clearFinalizer")
-	}else {
+	} else {
 		span = opentracing.StartSpan(operation)
 	}
 	defer span.Finish()

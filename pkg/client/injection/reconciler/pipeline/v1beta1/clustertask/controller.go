@@ -24,6 +24,8 @@ import (
 	reflect "reflect"
 	strings "strings"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	versionedscheme "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/scheme"
 	client "github.com/tektoncd/pipeline/pkg/client/injection/client"
 	clustertask "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1beta1/clustertask"
@@ -40,8 +42,6 @@ import (
 	logging "knative.dev/pkg/logging"
 	logkey "knative.dev/pkg/logging/logkey"
 	reconciler "knative.dev/pkg/reconciler"
-	"github.com/opentracing/opentracing-go"
-	tags "github.com/opentracing/opentracing-go/ext"
 )
 
 const (
@@ -60,7 +60,7 @@ func NewImpl(ctx context.Context, r Interface, optionsFns ...controller.OptionsF
 		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "NewImpl")
-	}else {
+	} else {
 		span = opentracing.StartSpan(operation)
 	}
 	defer span.Finish()
@@ -146,9 +146,9 @@ func createRecorder(ctx context.Context, agentName string) record.EventRecorder 
 	var span opentracing.Span
 	operation := "pkg/client/injection/reconciler/pipeline/v1beta1/clustertask.createRecorder"
 	if span = opentracing.SpanFromContext(ctx); span != nil {
-		span = opentracing.StartSpan( operation, opentracing.ChildOf(span.Context()))
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
-		tags.PeerService.Set(span, "createRecorder")	
+		tags.PeerService.Set(span, "createRecorder")
 	} else {
 		span = opentracing.StartSpan(operation)
 	}

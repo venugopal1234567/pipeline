@@ -24,6 +24,8 @@ import (
 	reflect "reflect"
 	strings "strings"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	versionedscheme "github.com/tektoncd/pipeline/pkg/client/clientset/versioned/scheme"
 	client "github.com/tektoncd/pipeline/pkg/client/injection/client"
 	task "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/task"
@@ -40,8 +42,6 @@ import (
 	logging "knative.dev/pkg/logging"
 	logkey "knative.dev/pkg/logging/logkey"
 	reconciler "knative.dev/pkg/reconciler"
-	"github.com/opentracing/opentracing-go"
-	tags "github.com/opentracing/opentracing-go/ext"
 )
 
 const (
