@@ -18,15 +18,19 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/opentracing/opentracing-go"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun"
 	"github.com/tektoncd/pipeline/pkg/reconciler/run"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun"
+	"github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go/config"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/client-go/rest"
@@ -40,6 +44,7 @@ import (
 const (
 	// ControllerLogKey is the name of the logger for the controller cmd
 	ControllerLogKey = "tekton-pipelines-controller"
+	jaeger_host_port = "jaeger-agent:6831"
 )
 
 func main() {
@@ -82,6 +87,30 @@ func main() {
 	if *disableHighAvailability {
 		ctx = sharedmain.WithHADisabled(ctx)
 	}
+
+	otlCfg := &config.Configuration{
+		ServiceName: ControllerLogKey,
+
+		// "const" sampler is a binary sampling strategy: 0=never sample, 1=always sample.
+		Sampler: &config.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+
+		// Log the emitted spans to stdout.
+		Reporter: &config.ReporterConfig{
+			LogSpans:           true,
+			LocalAgentHostPort: jaeger_host_port,
+		},
+	}
+
+	tracer, closer, err := otlCfg.NewTracer(config.Logger(jaeger.StdLogger))
+	if err != nil {
+		log.Fatal(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
+	}
+	defer closer.Close()
+
+	opentracing.SetGlobalTracer(tracer)
 
 	// sets up liveness and readiness probes.
 	mux := http.NewServeMux()

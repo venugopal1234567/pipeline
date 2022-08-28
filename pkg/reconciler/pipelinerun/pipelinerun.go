@@ -28,6 +28,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	apisconfig "github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
@@ -148,6 +150,17 @@ var (
 // converge the two. It then updates the Status block of the Pipeline Run
 // resource with the current status of the resource.
 func (c *Reconciler) ReconcileKind(ctx context.Context, pr *v1beta1.PipelineRun) pkgreconciler.Event {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.ReconcileKind"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "ReconcileKind")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 	ctx = cloudevent.ToContext(ctx, c.cloudEventClient)
 
@@ -243,6 +256,17 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pr *v1beta1.PipelineRun)
 }
 
 func (c *Reconciler) durationAndCountMetrics(ctx context.Context, pr *v1beta1.PipelineRun) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.durationAndCountMetrics"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "durationAndCountMetrics")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 	if pr.IsDone() {
 		// We get latest pipelinerun cr already to avoid recount
@@ -265,6 +289,17 @@ func (c *Reconciler) durationAndCountMetrics(ctx context.Context, pr *v1beta1.Pi
 }
 
 func (c *Reconciler) finishReconcileUpdateEmitEvents(ctx context.Context, pr *v1beta1.PipelineRun, beforeCondition *apis.Condition, previousError error) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.finishReconcileUpdateEmitEvents"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "finishReconcileUpdateEmitEvents")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 
 	afterCondition := pr.Status.GetCondition(apis.ConditionSucceeded)
@@ -290,6 +325,17 @@ func (c *Reconciler) resolvePipelineState(
 	pipelineMeta *metav1.ObjectMeta,
 	pr *v1beta1.PipelineRun,
 	providedResources map[string]*resourcev1alpha1.PipelineResource) (resources.PipelineRunState, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.resolvePipelineState"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "resolvePipelineState")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	pst := resources.PipelineRunState{}
 	// Resolve each task individually because they each could have a different reference context (remote or local).
 	for _, task := range tasks {
@@ -340,6 +386,17 @@ func (c *Reconciler) resolvePipelineState(
 }
 
 func (c *Reconciler) reconcile(ctx context.Context, pr *v1beta1.PipelineRun, getPipelineFunc rprp.GetPipeline) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.reconcile"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "reconcile")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer c.durationAndCountMetrics(ctx, pr)
 	logger := logging.FromContext(ctx)
 	cfg := config.FromContextOrDefaults(ctx)
@@ -660,6 +717,17 @@ func (c *Reconciler) processRunTimeouts(ctx context.Context, pr *v1beta1.Pipelin
 // after all DAG tasks are done, it's responsible for scheduling final tasks and start executing them
 func (c *Reconciler) runNextSchedulableTask(ctx context.Context, pr *v1beta1.PipelineRun, pipelineRunFacts *resources.PipelineRunFacts, as artifacts.ArtifactStorageInterface) error {
 
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.runNextSchedulableTask"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "runNextSchedulableTask")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 	recorder := controller.GetEventRecorder(ctx)
 
@@ -790,6 +858,17 @@ func (c *Reconciler) updateRunsStatusDirectly(pr *v1beta1.PipelineRun) error {
 type getTimeoutFunc func(ctx context.Context, pr *v1beta1.PipelineRun, rpt *resources.ResolvedPipelineTask, c clock.PassiveClock) *metav1.Duration
 
 func (c *Reconciler) createTaskRuns(ctx context.Context, rpt *resources.ResolvedPipelineTask, pr *v1beta1.PipelineRun, storageBasePath string, getTimeoutFunc getTimeoutFunc) ([]*v1beta1.TaskRun, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.createTaskRuns"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "createTaskRuns")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	var taskRuns []*v1beta1.TaskRun
 	matrixCombinations := matrix.FanOut(rpt.PipelineTask.Matrix).ToMap()
 	for i, taskRunName := range rpt.TaskRunNames {
@@ -804,6 +883,14 @@ func (c *Reconciler) createTaskRuns(ctx context.Context, rpt *resources.Resolved
 }
 
 func (c *Reconciler) createTaskRun(ctx context.Context, taskRunName string, params []v1beta1.Param, rpt *resources.ResolvedPipelineTask, pr *v1beta1.PipelineRun, storageBasePath string, getTimeoutFunc getTimeoutFunc) (*v1beta1.TaskRun, error) {
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		span := opentracing.StartSpan("pkg/reconciler/pipelinerun/pipelinerun.createTaskRun", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "createTaskRun")
+		// #nosec
+		defer span.Finish()
+		ctx = opentracing.ContextWithSpan(ctx, span)
+	}
 	logger := logging.FromContext(ctx)
 
 	tr, _ := c.taskRunLister.TaskRuns(pr.Namespace).Get(taskRunName)
@@ -863,6 +950,17 @@ func (c *Reconciler) createTaskRun(ctx context.Context, taskRunName string, para
 }
 
 func (c *Reconciler) createRuns(ctx context.Context, rpt *resources.ResolvedPipelineTask, pr *v1beta1.PipelineRun, getTimeoutFunc getTimeoutFunc) ([]*v1alpha1.Run, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.createRuns"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "createRuns")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	var runs []*v1alpha1.Run
 	matrixCombinations := matrix.FanOut(rpt.PipelineTask.Matrix).ToMap()
 	for i, runName := range rpt.RunNames {
@@ -877,6 +975,14 @@ func (c *Reconciler) createRuns(ctx context.Context, rpt *resources.ResolvedPipe
 }
 
 func (c *Reconciler) createRun(ctx context.Context, runName string, params []v1beta1.Param, rpt *resources.ResolvedPipelineTask, pr *v1beta1.PipelineRun, getTimeoutFunc getTimeoutFunc) (*v1alpha1.Run, error) {
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		span := opentracing.StartSpan("pkg/reconciler/pipelinerun/pipelinerun.createRun", opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "createRun")
+		// #nosec
+		defer span.Finish()
+		ctx = opentracing.ContextWithSpan(ctx, span)
+	}
 	logger := logging.FromContext(ctx)
 	taskRunSpec := pr.GetTaskRunSpec(rpt.PipelineTask.Name)
 	params = append(params, rpt.PipelineTask.Params...)
@@ -1120,6 +1226,17 @@ func addMetadataByPrecedence(metadata map[string]string, addedMetadata map[strin
 // If there is no timeout for the finally TaskRun, returns 0.
 // If pipeline level timeouts have already been exceeded, returns 1 second.
 func getFinallyTaskRunTimeout(ctx context.Context, pr *v1beta1.PipelineRun, rpt *resources.ResolvedPipelineTask, c clock.PassiveClock) *metav1.Duration {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.getFinallyTaskRunTimeout"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "getFinallyTaskRunTimeout")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	taskRunTimeout := calculateTaskRunTimeout(pr.PipelineTimeout(ctx), pr, rpt, c)
 	finallyTimeout := pr.FinallyTimeout()
 	// Return the smaller of taskRunTimeout and finallyTimeout
@@ -1138,6 +1255,17 @@ func getFinallyTaskRunTimeout(ctx context.Context, pr *v1beta1.PipelineRun, rpt 
 // If there is no timeout for the TaskRun, returns 0.
 // If pipeline level timeouts have already been exceeded, returns 1 second.
 func getTaskRunTimeout(ctx context.Context, pr *v1beta1.PipelineRun, rpt *resources.ResolvedPipelineTask, c clock.PassiveClock) *metav1.Duration {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.getTaskRunTimeout"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "getTaskRunTimeout")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	var timeout time.Duration
 	if pr.TasksTimeout() != nil {
 		timeout = pr.TasksTimeout().Duration
@@ -1174,6 +1302,17 @@ func calculateTaskRunTimeout(timeout time.Duration, pr *v1beta1.PipelineRun, rpt
 }
 
 func (c *Reconciler) updateLabelsAndAnnotations(ctx context.Context, pr *v1beta1.PipelineRun) (*v1beta1.PipelineRun, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.updateLabelsAndAnnotations"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "updateLabelsAndAnnotations")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	newPr, err := c.pipelineRunLister.PipelineRuns(pr.Namespace).Get(pr.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error getting PipelineRun %s when updating labels/annotations: %w", pr.Name, err)
@@ -1225,6 +1364,17 @@ func storePipelineSpecAndMergeMeta(pr *v1beta1.PipelineRun, ps *v1beta1.Pipeline
 }
 
 func (c *Reconciler) updatePipelineRunStatusFromInformer(ctx context.Context, pr *v1beta1.PipelineRun) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.updatePipelineRunStatusFromInformer"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "updatePipelineRunStatusFromInformer")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 
 	// Get the pipelineRun label that is set on each TaskRun.  Do not include the propagated labels from the
@@ -1246,6 +1396,17 @@ func (c *Reconciler) updatePipelineRunStatusFromInformer(ctx context.Context, pr
 }
 
 func updatePipelineRunStatusFromChildObjects(ctx context.Context, logger *zap.SugaredLogger, pr *v1beta1.PipelineRun, taskRuns []*v1beta1.TaskRun, runs []*v1alpha1.Run) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.updatePipelineRunStatusFromChildObjects"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "updatePipelineRunStatusFromChildObjects")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	cfg := config.FromContextOrDefaults(ctx)
 	fullEmbedded := cfg.FeatureFlags.EmbeddedStatus == config.FullEmbeddedStatus || cfg.FeatureFlags.EmbeddedStatus == config.BothEmbeddedStatus
 	minimalEmbedded := cfg.FeatureFlags.EmbeddedStatus == config.MinimalEmbeddedStatus || cfg.FeatureFlags.EmbeddedStatus == config.BothEmbeddedStatus
@@ -1262,6 +1423,17 @@ func updatePipelineRunStatusFromChildObjects(ctx context.Context, logger *zap.Su
 }
 
 func validateChildObjectsInPipelineRunStatus(ctx context.Context, prs v1beta1.PipelineRunStatus) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.validateChildObjectsInPipelineRunStatus"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "validateChildObjectsInPipelineRunStatus")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	cfg := config.FromContextOrDefaults(ctx)
 
 	var err error

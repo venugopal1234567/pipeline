@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -78,6 +80,17 @@ func cancelRun(ctx context.Context, runName string, namespace string, clientSet 
 
 // cancelPipelineRun marks the PipelineRun as cancelled and any resolved TaskRun(s) too.
 func cancelPipelineRun(ctx context.Context, logger *zap.SugaredLogger, pr *v1beta1.PipelineRun, clientSet clientset.Interface) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.cancelPipelineRun"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "cancelPipelineRun")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	errs := cancelPipelineTaskRuns(ctx, logger, pr, clientSet)
 
 	// If we successfully cancelled all the TaskRuns and Runs, we can consider the PipelineRun cancelled.
@@ -108,6 +121,17 @@ func cancelPipelineRun(ctx context.Context, logger *zap.SugaredLogger, pr *v1bet
 
 // cancelPipelineTaskRuns patches `TaskRun` and `Run` with canceled status
 func cancelPipelineTaskRuns(ctx context.Context, logger *zap.SugaredLogger, pr *v1beta1.PipelineRun, clientSet clientset.Interface) []string {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.cancelPipelineTaskRuns"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "cancelPipelineTaskRuns")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	errs := []string{}
 
 	trNames, runNames, err := getChildObjectsFromPRStatus(ctx, pr.Status)
@@ -139,6 +163,17 @@ func cancelPipelineTaskRuns(ctx context.Context, logger *zap.SugaredLogger, pr *
 // getChildObjectsFromPRStatus returns taskruns and runs in the PipelineRunStatus's ChildReferences or TaskRuns/Runs,
 // based on the value of the embedded status flag.
 func getChildObjectsFromPRStatus(ctx context.Context, prs v1beta1.PipelineRunStatus) ([]string, []string, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.getChildObjectsFromPRStatus"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "getChildObjectsFromPRStatus")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	cfg := config.FromContextOrDefaults(ctx)
 
 	var trNames []string

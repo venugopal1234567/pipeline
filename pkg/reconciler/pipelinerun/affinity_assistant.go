@@ -21,6 +21,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/pod"
@@ -49,6 +51,17 @@ const (
 // use a PersistentVolumeClaim volume. This is done to achieve Node Affinity for all TaskRuns that
 // share the workspace volume and make it possible for the tasks to execute parallel while sharing volume.
 func (c *Reconciler) createAffinityAssistants(ctx context.Context, wb []v1beta1.WorkspaceBinding, pr *v1beta1.PipelineRun, namespace string) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.createAffinityAssistants"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "createAffinityAssistants")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 	cfg := config.FromContextOrDefaults(ctx)
 
@@ -88,6 +101,17 @@ func getClaimName(w v1beta1.WorkspaceBinding, ownerReference metav1.OwnerReferen
 
 func (c *Reconciler) cleanupAffinityAssistants(ctx context.Context, pr *v1beta1.PipelineRun) error {
 
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun.cleanupAffinityAssistants"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "GetPipelineData")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	// omit cleanup if the feature is disabled
 	if c.isAffinityAssistantDisabled(ctx) {
 		return nil

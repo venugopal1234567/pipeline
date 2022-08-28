@@ -21,6 +21,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -56,6 +58,17 @@ func NewPVCHandler(clientset clientset.Interface, logger *zap.SugaredLogger) Pvc
 // resource with the volumeClaimTemplate declared, a PipelineRun or TaskRun. If the PVC did not exist, a new PVC
 // with that name is created with the provided OwnerReference.
 func (c *defaultPVCHandler) CreatePersistentVolumeClaimsForWorkspaces(ctx context.Context, wb []v1beta1.WorkspaceBinding, ownerReference metav1.OwnerReference, namespace string) error {
+	var span opentracing.Span
+	operation := "pkg/reconciler/volumeclaim.CreatePersistentVolumeClaimsForWorkspaces"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "CreatePersistentVolumeClaimsForWorkspaces")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	var errs []error
 	for _, claim := range getPersistentVolumeClaims(wb, ownerReference, namespace) {
 		_, err := c.clientset.CoreV1().PersistentVolumeClaims(claim.Namespace).Get(ctx, claim.Name, metav1.GetOptions{})

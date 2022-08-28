@@ -21,6 +21,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +41,18 @@ type GetClusterTask func(name string) (v1beta1.TaskObject, error)
 // provided TaskRun. This can come from a reference Task or from the TaskRun's
 // metadata and embedded TaskSpec.
 func GetTaskData(ctx context.Context, taskRun *v1beta1.TaskRun, getTask GetTask) (*metav1.ObjectMeta, *v1beta1.TaskSpec, error) {
+
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun/resources.GetTaskData"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "GetTaskData")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	taskMeta := metav1.ObjectMeta{}
 	taskSpec := v1beta1.TaskSpec{}
 	cfg := config.FromContextOrDefaults(ctx)

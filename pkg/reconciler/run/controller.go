@@ -19,6 +19,8 @@ package run
 import (
 	"context"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	runinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/run"
@@ -34,6 +36,17 @@ import (
 // This is a read-only controller, hence the SkipStatusUpdates set to true
 func NewController() func(context.Context, configmap.Watcher) *controller.Impl {
 	return func(ctx context.Context, cmw configmap.Watcher) *controller.Impl {
+		var span opentracing.Span
+		operation := "pkg/reconciler/pipelinerun/run.NewController"
+		if span = opentracing.SpanFromContext(ctx); span != nil {
+			span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+			tags.SpanKindRPCClient.Set(span)
+			tags.PeerService.Set(span, "NewController")
+		} else {
+			span = opentracing.StartSpan(operation)
+		}
+		defer span.Finish()
+		ctx = opentracing.ContextWithSpan(ctx, span)
 		logger := logging.FromContext(ctx)
 		runInformer := runinformer.Get(ctx)
 

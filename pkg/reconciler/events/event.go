@@ -20,6 +20,8 @@ import (
 	"context"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/reconciler/events/cloudevent"
 	corev1 "k8s.io/api/core/v1"
@@ -48,6 +50,17 @@ const (
 // k8s events are always sent if afterCondition is different from beforeCondition
 // Cloud events are always sent if enabled, i.e. if a sink is available
 func Emit(ctx context.Context, beforeCondition *apis.Condition, afterCondition *apis.Condition, object runtime.Object) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/events.Emit"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "Emit")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	recorder := controller.GetEventRecorder(ctx)
 	logger := logging.FromContext(ctx)
 	configs := config.FromContextOrDefaults(ctx)
@@ -71,6 +84,17 @@ func Emit(ctx context.Context, beforeCondition *apis.Condition, afterCondition *
 
 // EmitCloudEvents emits CloudEvents (only) for object
 func EmitCloudEvents(ctx context.Context, object runtime.Object) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/events.EmitCloudEvents"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "EmitCloudEvents")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 	configs := config.FromContextOrDefaults(ctx)
 	sendCloudEvents := (configs.Defaults.DefaultCloudEventsSink != "")

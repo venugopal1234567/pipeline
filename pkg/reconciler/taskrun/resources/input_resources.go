@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"github.com/tektoncd/pipeline/pkg/apis/resource/v1alpha1/storage"
@@ -53,6 +55,17 @@ func AddInputResource(
 	taskRun *v1beta1.TaskRun,
 	inputResources map[string]v1beta1.PipelineResourceInterface,
 ) (*v1beta1.TaskSpec, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun/resources.AddInputResource"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "AddOutputResources")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	if taskSpec == nil || taskSpec.Resources == nil || taskSpec.Resources.Inputs == nil {
 		return taskSpec, nil
 	}

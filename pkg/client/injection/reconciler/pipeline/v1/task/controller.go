@@ -40,6 +40,8 @@ import (
 	logging "knative.dev/pkg/logging"
 	logkey "knative.dev/pkg/logging/logkey"
 	reconciler "knative.dev/pkg/reconciler"
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 )
 
 const (
@@ -52,6 +54,17 @@ const (
 // the provided Interface and optional Finalizer methods. OptionsFn is used to return
 // controller.ControllerOptions to be used by the internal reconciler.
 func NewImpl(ctx context.Context, r Interface, optionsFns ...controller.OptionsFn) *controller.Impl {
+	var span opentracing.Span
+	operation := "pkg/client/injection/reconciler/pipeline/v1/task.NewImpl"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "NewImpl")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 
 	// Check the options function input. It should be 0 or 1.
@@ -130,6 +143,17 @@ func NewImpl(ctx context.Context, r Interface, optionsFns ...controller.OptionsF
 }
 
 func createRecorder(ctx context.Context, agentName string) record.EventRecorder {
+	var span opentracing.Span
+	operation := "pkg/client/injection/reconciler/pipeline/v1/task.createRecorder"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "createRecorder")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	logger := logging.FromContext(ctx)
 
 	recorder := controller.GetEventRecorder(ctx)

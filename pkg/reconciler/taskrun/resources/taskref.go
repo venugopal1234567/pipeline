@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/authn/k8schain"
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	clientset "github.com/tektoncd/pipeline/pkg/client/clientset/versioned"
@@ -56,6 +58,17 @@ func GetTaskKind(taskrun *v1beta1.TaskRun) v1beta1.TaskKind {
 // cluster or authorize against an external repositroy. It will figure out whether it needs to look in the cluster or in
 // a remote image to fetch the  reference. It will also return the "kind" of the task being referenced.
 func GetTaskFuncFromTaskRun(ctx context.Context, k8s kubernetes.Interface, tekton clientset.Interface, requester remoteresource.Requester, taskrun *v1beta1.TaskRun) (GetTask, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun/resources.GetTaskFuncFromTaskRun"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "GetTaskFuncFromTaskRun")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	// if the spec is already in the status, do not try to fetch it again, just use it as source of truth
 	if taskrun.Status.TaskSpec != nil {
 		return func(_ context.Context, name string) (v1beta1.TaskObject, error) {
@@ -77,6 +90,17 @@ func GetTaskFuncFromTaskRun(ctx context.Context, k8s kubernetes.Interface, tekto
 // a remote image to fetch the  reference. It will also return the "kind" of the task being referenced.
 func GetTaskFunc(ctx context.Context, k8s kubernetes.Interface, tekton clientset.Interface, requester remoteresource.Requester,
 	owner kmeta.OwnerRefable, tr *v1beta1.TaskRef, trName string, namespace, saName string) (GetTask, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun/resources.GetTaskFunc"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "GetTaskFunc")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	cfg := config.FromContextOrDefaults(ctx)
 	kind := v1beta1.NamespacedTaskKind
 	if tr != nil && tr.Kind != "" {
@@ -129,6 +153,17 @@ func GetTaskFunc(ctx context.Context, k8s kubernetes.Interface, tekton clientset
 // remoteresource doesn't work or the returned data isn't a valid
 // v1beta1.TaskObject.
 func resolveTask(ctx context.Context, resolver remote.Resolver, name string, kind v1beta1.TaskKind) (v1beta1.TaskObject, error) {
+	var span opentracing.Span
+	operation := "pkg/reconciler/pipelinerun/resources.resolveTask"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "resolveTask")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	// Because the resolver will only return references with the same kind (eg ClusterTask), this will ensure we
 	// don't accidentally return a Task with the same name but different kind.
 	obj, err := resolver.Get(ctx, strings.TrimSuffix(strings.ToLower(string(kind)), "s"), name)

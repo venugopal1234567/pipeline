@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/credentials"
@@ -51,6 +53,17 @@ var dnsLabel1123Forbidden = regexp.MustCompile("[^a-zA-Z0-9-]+")
 // caller. If no matching annotated secrets are found, nil lists with a
 // nil error are returned.
 func credsInit(ctx context.Context, serviceAccountName, namespace string, kubeclient kubernetes.Interface) ([]string, []corev1.Volume, []corev1.VolumeMount, error) {
+	var span opentracing.Span
+	operation := "pkg/pod.credsInit"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "credsInit")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	cfg := config.FromContextOrDefaults(ctx)
 	if cfg != nil && cfg.FeatureFlags != nil && cfg.FeatureFlags.DisableCredsInit {
 		return nil, nil, nil, nil
@@ -134,6 +147,18 @@ func credsInit(ctx context.Context, serviceAccountName, namespace string, kubecl
 // will return a new volume and volume mount. Takes an integer index to append to
 // the name of the volume.
 func getCredsInitVolume(ctx context.Context, idx int) (*corev1.Volume, *corev1.VolumeMount) {
+	var span opentracing.Span
+	operation := "pkg/pod.getCredsInitVolume"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "getCredsInitVolume")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
 	cfg := config.FromContextOrDefaults(ctx)
 	if cfg != nil && cfg.FeatureFlags != nil && cfg.FeatureFlags.DisableCredsInit {
 		return nil, nil
@@ -155,6 +180,18 @@ func getCredsInitVolume(ctx context.Context, idx int) (*corev1.Volume, *corev1.V
 // checkGitSSHSecret requires `known_host` field must be included in Git SSH Secret when feature flag
 // `require-git-ssh-secret-known-hosts` is true.
 func checkGitSSHSecret(ctx context.Context, secret *corev1.Secret) error {
+	var span opentracing.Span
+	operation := "pkg/pod.checkGitSSHSecret"
+	if span = opentracing.SpanFromContext(ctx); span != nil {
+		span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+		tags.SpanKindRPCClient.Set(span)
+		tags.PeerService.Set(span, "checkGitSSHSecret")
+	} else {
+		span = opentracing.StartSpan(operation)
+	}
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
 	cfg := config.FromContextOrDefaults(ctx)
 
 	if secret.Type == corev1.SecretTypeSSHAuth && cfg.FeatureFlags.RequireGitSSHSecretKnownHosts {

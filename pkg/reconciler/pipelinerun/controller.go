@@ -19,6 +19,8 @@ package pipelinerun
 import (
 	"context"
 
+	"github.com/opentracing/opentracing-go"
+	tags "github.com/opentracing/opentracing-go/ext"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -45,6 +47,17 @@ import (
 // NewController instantiates a new controller.Impl from knative.dev/pkg/controller
 func NewController(opts *pipeline.Options, clock clock.PassiveClock) func(context.Context, configmap.Watcher) *controller.Impl {
 	return func(ctx context.Context, cmw configmap.Watcher) *controller.Impl {
+		var span opentracing.Span
+		operation := "pkg/reconciler/pipelinerun.NewController"
+		if span = opentracing.SpanFromContext(ctx); span != nil {
+			span = opentracing.StartSpan(operation, opentracing.ChildOf(span.Context()))
+			tags.SpanKindRPCClient.Set(span)
+			tags.PeerService.Set(span, "NewController")
+		} else {
+			span = opentracing.StartSpan(operation)
+		}
+		defer span.Finish()
+		ctx = opentracing.ContextWithSpan(ctx, span)
 		logger := logging.FromContext(ctx)
 		kubeclientset := kubeclient.Get(ctx)
 		pipelineclientset := pipelineclient.Get(ctx)
