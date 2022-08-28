@@ -32,7 +32,16 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/benbjohnson/clock v1.1.0 // indirect
+require (
+	github.com/opentracing/opentracing-go v1.1.0
+	github.com/uber/jaeger-client-go v2.30.0+incompatible
+)
+
+require (
+	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/benbjohnson/clock v1.1.0 // indirect
+	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
+)
 
 require (
 	cloud.google.com/go/compute v1.5.0 // indirect
